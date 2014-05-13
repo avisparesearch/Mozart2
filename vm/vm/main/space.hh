@@ -294,8 +294,8 @@ void Space::kill(VM vm) {
 
   clearStatusVar(vm);
 
-  assert(vm->getCurrentSpace() == parent);
-  bindStatusVar(vm, build(vm, vm->coreatoms.failed));
+  if(vm->getCurrentSpace() == parent)
+    bindStatusVar(vm, build(vm, vm->coreatoms.failed));
 }
 
 // Status variable
@@ -308,8 +308,8 @@ void Space::clearStatusVar(VM vm) {
 
 void Space::bindStatusVar(VM vm, RichNode value) {
   RichNode statusVar = *getStatusVar();
-  assert(statusVar.isTransient());
-  DataflowVariable(statusVar).bind(vm, value);
+  if(statusVar.isTransient())
+    DataflowVariable(statusVar).bind(vm, value);
 }
 
 void Space::bindStatusVar(VM vm, UnstableNode&& value) {
@@ -370,28 +370,47 @@ void Space::restoreAfterGR() {
 // Stability detection
 
 void Space::notifyThreadCreated() {
+  std::cerr << "notifyThreadCreated Space: " << this << "\n";
+  std::cerr << "\tThreadCount: " << threadCount << " Cascade: " << cascadedRunnableThreadCount << "\n";
   incThreadCount();
+  std::cerr << "\tValor des ThreadCount: " << threadCount << " Cascade: " << cascadedRunnableThreadCount << "\n";
 }
 
 void Space::notifyThreadTerminated() {
   if (isTopLevel())
     return;
+  std::cerr << "notifyThreadTerminated Space: " << this << "\n";
+  std::cerr << "\tThreadCount: " << threadCount << " Cascade: " << cascadedRunnableThreadCount << "\n";
 
   assert(cascadedRunnableThreadCount > 0);
   if (--cascadedRunnableThreadCount == 0)
     getParent()->decRunnableThreadCount();
 
+  std::cerr << "\tThreadCount: " << threadCount << " Cascade: " << cascadedRunnableThreadCount << "\n";
+
   checkStability();
 }
 
 void Space::notifyThreadResumed() {
-  if (!isTopLevel())
+  std::cerr << "notifyThreadResumed Space: " << this << "\n";
+
+  std::cerr << "\tThreadCount: " << threadCount << " Cascade: " << cascadedRunnableThreadCount << "\n";
+
+ if (!isTopLevel())
     incRunnableThreadCount();
+ 
+ std::cerr << "\tResume desThreadCount: " << threadCount << " Cascade: " << cascadedRunnableThreadCount << "\n";
+  
 }
 
 void Space::notifyThreadSuspended() {
+  std::cerr << "notifyThreadSuspended Space: " << this << "\n";
+  std::cerr << "\tThreadCount: " << threadCount << " Cascade: " << cascadedRunnableThreadCount << "\n";
+
   if (!isTopLevel())
     decRunnableThreadCount();
+  std::cerr << "\tThreadCount: " << threadCount << " Cascade: " << cascadedRunnableThreadCount << "\n";
+    
 }
 
 bool Space::isStable() {
@@ -437,9 +456,10 @@ void Space::incRunnableThreadCount() {
 void Space::decRunnableThreadCount() {
   if (!isTopLevel()) {
     if (--cascadedRunnableThreadCount == 0) {
-      if (isStable())
-        new (vm) internal::DummyThread(vm, this);
-
+      if (isStable()){
+	Runnable* r=new (vm) internal::DummyThread(vm, this);
+	std::cerr << "\tDummyThread " << r << "\n";
+      }
       getParent()->decRunnableThreadCount();
     }
   }
@@ -450,12 +470,17 @@ bool Space::hasRunnableThreads() {
 }
 
 void Space::checkStability() {
+
+  std::cerr << "checkStability " << this << "\n";
+  vm->getCurrentThread()->dump();
+
   assert(!isTopLevel());
   assert(status() == ssNormal);
 
   Space* parent = getParent();
 
   if (isStable()) {
+    std::cerr << "isStableTrue \n";
     // Succeeded
     vm->setCurrentSpace(parent);
 
@@ -468,6 +493,7 @@ void Space::checkStability() {
       bindStatusVar(vm, genSucceeded(vm, getThreadCount() == 0));
     }
   } else {
+    std::cerr << "isStableFalse \n";
     deinstallTo(parent); // TODO Why !?
 
     if (!hasRunnableThreads()) {

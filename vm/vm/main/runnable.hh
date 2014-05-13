@@ -103,6 +103,8 @@ Runnable::Runnable(VM vm, Space* space, ThreadPriority priority) :
 
   _reification.init(vm, ReifiedThread::build(vm, this));
 
+  std::cerr << "Runnable " << this << "\n";
+
   _space->notifyThreadCreated();
 
   vm->aliveThreads.insert(this);
@@ -140,6 +142,9 @@ void Runnable::resume(bool skipSchedule) {
   assert(!_runnable);
 
   _runnable = true;
+  
+  std::cerr << "Resume " << this << "\n";
+
   _space->notifyThreadResumed();
 
   if (!skipSchedule)
@@ -151,6 +156,9 @@ void Runnable::suspend(bool skipUnschedule) {
   assert(_runnable);
 
   _runnable = false;
+
+  std::cerr << "Suspend " << this << "\n";
+
   _space->notifyThreadSuspended();
 
   if (!skipUnschedule)
@@ -201,6 +209,8 @@ void Runnable::terminate() {
 
   _runnable = false;
   _terminated = true;
+
+  std::cerr << "Terminated " << this << "\n";
 
   _space->notifyThreadTerminated();
 

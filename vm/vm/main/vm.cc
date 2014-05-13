@@ -31,6 +31,9 @@ namespace mozart {
 ////////////////////
 
 VirtualMachine::run_return_type VirtualMachine::run() {
+
+  //std::cout << "Ejecuto run_return_type......" << std::endl;
+
   while (!(testAndClearExitRunRequested() ||
       (_envUseDynamicPreemption && environment.testDynamicExitRun()))) {
 
@@ -50,6 +53,7 @@ VirtualMachine::run_return_type VirtualMachine::run() {
     }
 
     // Select a thread
+    //saber cuando la maquina virtual ejecuta el metodo y que hilo lo hace
     Runnable* currentThread;
     do {
       currentThread = threadPool.popNext();
@@ -69,8 +73,10 @@ VirtualMachine::run_return_type VirtualMachine::run() {
     // Run the thread
     assert(currentThread->isRunnable());
     _currentThread = currentThread;
+    //llamado a currentthread
     currentThread->run();
     _currentThread = nullptr;
+    //llamado de nuevo a currentthread
 
     // Schedule the thread anew if it is still runnable
     if (currentThread->isRunnable())

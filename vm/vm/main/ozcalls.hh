@@ -27,6 +27,7 @@
 
 #include "mozartcore.hh"
 #include "emulate.hh"
+#include <iostream>
 
 #include <type_traits>
 
@@ -243,6 +244,23 @@ void asyncOzCall(VM vm, Space* space, RichNode callable, Args&&... args) {
   new (vm) Thread(vm, space, callable, argc, arguments);
 }
 
+  //-------------------------------------------------------------------------
+template <typename... Args>
+void asyncOzCalltest(VM vm, Space* space, RichNode callable, Args&&... args) {
+  constexpr size_t argc = sizeof...(args);
+
+  UnstableNode unstableArgs[argc];
+  RichNode arguments[argc];
+  internal::initInputArguments<false>(
+    vm, unstableArgs, arguments, std::forward<Args>(args)...);
+  Thread *t=new (vm) Thread(vm, space, callable, argc, arguments);//Hilo del new (newthread)
+  std::cerr << "Esta es la direccion del hilo \n";
+  t->dump();
+  std::cerr << "Hilo principal \n";
+  vm->getCurrentThread()->dump();
+}
+  //--------------------------------------------------------------------------
+ 
 template <typename... Args>
 void asyncOzCall(VM vm, RichNode callable, Args&&... args) {
   asyncOzCall(vm, vm->getCurrentSpace(), callable,

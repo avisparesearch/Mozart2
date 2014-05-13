@@ -30,6 +30,7 @@
 #include <utility>
 #include <stack>
 #include <cassert>
+#include <iostream>
 
 namespace mozart {
 
@@ -216,6 +217,10 @@ protected:
   void terminate();
 
   void dispose() {
+    //imprimir this*
+    //std::cout << "Este es el hilo - impresion en la clase thread " << this << std::endl;
+    std::cerr << "Dispose \n";
+    dump();
     xregs.release(vm);
 
     while (!stack.empty()) {

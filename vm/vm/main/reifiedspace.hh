@@ -26,6 +26,9 @@
 #define __REIFIEDSPACE_H
 
 #include "mozartcore.hh"
+#include <iostream>
+#include <unistd.h>
+
 
 #ifndef MOZART_GENERATOR
 
@@ -130,9 +133,20 @@ UnstableNode ReifiedSpace::askSpace(RichNode self, VM vm) {
 
   RichNode statusVar = *space->getStatusVar();
 
+  std::cerr << "AskSpace \n";
+  vm->getCurrentThread()->dump();
+
   if (matchesTuple(vm, statusVar, vm->coreatoms.succeeded, wildcard())) {
+    std::cerr << "AskSpaceTrue \n";
+    vm->getCurrentThread()->dump();
+
+    // while(1){
+    //   std::cerr << "While Ask " << getpid() << "\n";
+    // }
+    
     return Atom::build(vm, vm->coreatoms.succeeded);
   } else {
+    std::cerr << "AskSpaceFalse \n";
     return { vm, statusVar };
   }
 }

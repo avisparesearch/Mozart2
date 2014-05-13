@@ -58,6 +58,10 @@ void asyncOzCall(VM vm, Space* space, RichNode callable, Args&&... args);
 
 template <typename... Args>
 inline
+void asyncOzCalltest(VM vm, Space* space, RichNode callable, Args&&... args);
+
+template <typename... Args>
+inline
 void asyncOzCall(VM vm, RichNode callable, Args&&... args);
 
 template <typename... Args>
